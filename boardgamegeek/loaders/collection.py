@@ -25,6 +25,7 @@ def add_collection_items_from_xml(collection, xml_root, subtype):
         # initial data for this collection item
         data = {"name": xml_subelement_text(item, "name"),
                 "id": int(item.attrib["objectid"]),
+                "originalname": xml_subelement_text(item, "originalname"),
                 "image": xml_subelement_text(item, "image"),
                 "thumbnail": xml_subelement_text(item, "thumbnail"),
                 "yearpublished": xml_subelement_attr(item,
@@ -39,12 +40,14 @@ def add_collection_items_from_xml(collection, xml_root, subtype):
         stats = item.find("stats")
         if stats is None:
             raise BGGApiError("missing 'stats'")
+            
+        ratings = stats.find("rating")
 
-        stat_data = {"usersrated": xml_subelement_attr(stats, "usersrated", convert=int, quiet=True),
-                     "average": xml_subelement_attr(stats, "average", convert=float, quiet=True),
-                     "bayesaverage": xml_subelement_attr(stats, "bayesaverage", convert=float, quiet=True),
-                     "stddev": xml_subelement_attr(stats, "stddev", convert=float, quiet=True),
-                     "median": xml_subelement_attr(stats, "median", convert=float, quiet=True),
+        stat_data = {"usersrated": xml_subelement_attr(ratings, "usersrated", convert=int, quiet=True),
+                     "average": xml_subelement_attr(ratings, "average", convert=float, quiet=True),
+                     "bayesaverage": xml_subelement_attr(ratings, "bayesaverage", convert=float, quiet=True),
+                     "stddev": xml_subelement_attr(ratings, "stddev", convert=float, quiet=True),
+                     "median": xml_subelement_attr(ratings, "median", convert=float, quiet=True),
                      "ranks": []}
 
         for rank in stats.findall("ranks/rank"):
