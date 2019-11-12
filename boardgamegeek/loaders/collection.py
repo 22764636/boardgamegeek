@@ -40,23 +40,34 @@ def add_collection_items_from_xml(collection, xml_root, subtype):
         stats = item.find("stats")
         if stats is None:
             raise BGGApiError("missing 'stats'")
-            
-        ratings = stats.find("rating")
 
-        stat_data = {"usersrated": xml_subelement_attr(ratings, "usersrated", convert=int, quiet=True),
-                     "average": xml_subelement_attr(ratings, "average", convert=float, quiet=True),
-                     "bayesaverage": xml_subelement_attr(ratings, "bayesaverage", convert=float, quiet=True),
-                     "stddev": xml_subelement_attr(ratings, "stddev", convert=float, quiet=True),
-                     "median": xml_subelement_attr(ratings, "median", convert=float, quiet=True),
+        rating = stats.find("rating")
+
+        stat_data = {"usersrated": xml_subelement_attr(rating, "usersrated", convert=int, default=0, quiet=True),
+                     "average": xml_subelement_attr(rating, "average", convert=float, default=0, quiet=True),
+                     "bayesaverage": xml_subelement_attr(rating, "bayesaverage", convert=float, default=0, quiet=True),
+                     "stddev": xml_subelement_attr(rating, "stddev", convert=float, default=0, quiet=True),
+                     "median": xml_subelement_attr(rating, "median", convert=float, default=0, quiet=True),
                      "ranks": []}
 
-        for rank in stats.findall("ranks/rank"):
-            stat_data["ranks"].append({"type": rank.attrib.get("type"),
-                                       "id": rank.attrib["id"],
-                                       "name": rank.attrib["name"],
-                                       "friendlyname": rank.attrib["friendlyname"],
-                                       "value": rank.attrib.get("value"),
-                                       "bayesaverage": float(rank.attrib.get("bayesaverage", 0.0))})
+        for rank in rating.findall("ranks/rank"):
+
+            try:
+                int(rank.attrib.get("value"))
+            except:
+                stat_data["ranks"].append({"type": rank.attrib.get("type"),
+                                           "id": rank.attrib["id"],
+                                           "name": rank.attrib["name"],
+                                           "friendlyname": rank.attrib["friendlyname"],
+                                           "value": 0,
+                                           "bayesaverage": xml_subelement_attr(rank, "bayesaverage", convert=float, default=0, quiet=True)})
+            else:
+                stat_data["ranks"].append({"type": rank.attrib.get("type"),
+                                           "id": rank.attrib["id"],
+                                           "name": rank.attrib["name"],
+                                           "friendlyname": rank.attrib["friendlyname"],
+                                           "value": rank.attrib.get('value'),
+                                           "bayesaverage": xml_subelement_attr(rank, "bayesaverage", convert=float, default=0, quiet=True)})
 
         data.update({"stats": stat_data,
                      "minplayers": int(stats.attrib.get("minplayers", 0)),
@@ -90,6 +101,8 @@ def add_collection_items_from_xml(collection, xml_root, subtype):
                     data["versions"] = [get_board_game_version_from_element(ver)]
                 except KeyError:
                     raise BGGApiError("malformed XML element ('version')")
+
+        print(data)
 
         collection.add_game(data)
         added_items = True
